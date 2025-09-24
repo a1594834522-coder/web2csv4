@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 380px;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0;
+      color: #1a73e8;
+      font-size: 18px;
+    }
+    .status {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .success {
+      background-color: #e6f4ea;
+      color: #137333;
+      border: 1px solid #c8e6c9;
+    }
+    .error {
+      background-color: #fce8e6;
+      color: #c5221f;
+      border: 1px solid #fad2cf;
+    }
+    .info {
+      background-color: #e8f0fe;
+      color: #1a73e8;
+      border: 1px solid #d2e3fc;
+    }
+    .document-info {
+      background-color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #dadce0;
+    }
+    .document-info h3 {
+      margin: 0 0 10px 0;
+      color: #202124;
+      font-size: 14px;
+    }
+    .document-info p {
+      margin: 5px 0;
+      color: #5f6368;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .download-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      margin-bottom: 10px;
+    }
+    .download-btn:hover {
+      background-color: #1557b0;
+    }
+    .download-btn:disabled {
+      background-color: #dadce0;
+      cursor: not-allowed;
+    }
+    .loading {
+      text-align: center;
+      color: #5f6368;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Document CSV Downloader</h1>
+  </div>
+
+  <div id="status" class="status loading">
+    Checking current page...
+  </div>
+
+  
+  <div id="sheetInfo" style="display: none;" class="document-info">
+    <h3>Google Sheet Information</h3>
+    <p><strong>Sheet ID:</strong> <span id="sheetId"></span></p>
+    <p><strong>GID:</strong> <span id="gid"></span></p>
+    <p><strong>Download URL:</strong> <span id="downloadUrl"></span></p>
+    <p><strong>Real Download URL:</strong> <span id="realDownloadUrl" style="color: #1a73e8; word-break: break-all;"></span></p>
+  </div>
+
+  <div id="feishuInfo" style="display: none;" class="document-info">
+    <h3>Feishu Document Information</h3>
+    <p><strong>Document Type:</strong> <span id="feishuType"></span></p>
+    <p><strong>Token:</strong> <span id="feishuToken"></span></p>
+    <p><strong>URL:</strong> <span id="feishuUrl"></span></p>
+    <p><strong>Real Download URL:</strong> <span id="feishuRealDownloadUrl" style="color: #1a73e8; word-break: break-all;"></span></p>
+  </div>
+
+  <div id="dingTalkInfo" style="display: none;" class="document-info">
+    <h3>DingTalk Document Information</h3>
+    <p><strong>Document ID:</strong> <span id="dingTalkNodeId"></span></p>
+    <p><strong>URL:</strong> <span id="dingTalkUrl"></span></p>
+    <p><strong>Real Download URL:</strong> <span id="dingTalkRealDownloadUrl" style="color: #1a73e8; word-break: break-all;"></span></p>
+    <p style="color: #666; font-size: 11px; margin-top: 10px;">
+      <strong>Note:</strong> This will get the download URL via API
+    </p>
+  </div>
+
+  <button id="downloadBtn" style="display: none;" class="download-btn">
+    Download as CSV
+  </button>
+
+  <script src="popup.js"></script>
+</body>
+</html>

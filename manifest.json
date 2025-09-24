@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Document CSV Downloader",
+  "version": "2.0",
+  "description": "Extract and export Google Sheets and Feishu documents as CSV files",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads",
+    "storage",
+    "tabs"
+  ],
+    "host_permissions": [
+    "https://docs.google.com/spreadsheets/*",
+    "https://open.feishu.cn/*",
+    "https://*.feishu.cn/*",
+    "https://alidocs.dingtalk.com/*",
+    "https://*.dingtalk.com/*"
+      ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Download Document as CSV"
+  },
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://alidocs.dingtalk.com/*"],
+      "js": ["dingtalk-content-script.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
