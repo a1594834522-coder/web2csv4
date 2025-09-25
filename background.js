@@ -1,3 +1,4 @@
+
 function extractSheetInfo(url) {
   try {
     const sheetIdMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
@@ -13,7 +14,7 @@ function extractSheetInfo(url) {
     return {
       sheetId,
       gid,
-      downloadUrl: `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`
+      downloadUrl: `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=xlsx&gid=${gid}`
     };
   } catch (error) {
     console.error('Error extracting sheet info:', error);
@@ -21,31 +22,6 @@ function extractSheetInfo(url) {
   }
 }
 
-function extractDingTalkInfo(url) {
-  try {
-    const dingTalkMatch = url.match(/alidocs\.dingtalk\.com\/i\/nodes\/([a-zA-Z0-9_-]+)/);
-    if (!dingTalkMatch) {
-      // 尝试匹配预览页面URL
-      const previewMatch = url.match(/alidocs\.dingtalk\.com\/uni-preview.*dentryUuid=([a-zA-Z0-9]+)/);
-      if (previewMatch) {
-        return {
-          dentryUuid: previewMatch[1],
-          url: url,
-          type: 'preview'
-        };
-      }
-      return null;
-    }
-    return {
-      nodeId: dingTalkMatch[1],
-      url: url,
-      type: 'node'
-    };
-  } catch (error) {
-    console.error('Error extracting DingTalk info:', error);
-    return null;
-  }
-}
 
 function extractFeishuInfo(url) {
   try {
@@ -74,7 +50,7 @@ function extractFeishuInfo(url) {
 async function createFeishuExportTask(token, type, subId, accessToken) {
   try {
     const body = {
-      file_extension: 'csv',
+      file_extension: 'xlsx',
       token: token,
       type: type
     };
@@ -161,8 +137,8 @@ async function downloadFeishuFile(fileToken, accessToken, filename) {
     const reader = new FileReader();
     return new Promise((resolve, reject) => {
       reader.onload = function() {
-        const base64data = reader.result.split(',')[1]; // Remove data:text/csv;base64, prefix
-        const dataUrl = `data:text/csv;base64,${base64data}`;
+        const base64data = reader.result.split(',')[1]; // Remove data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64, prefix
+        const dataUrl = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64data}`;
 
         chrome.downloads.download({
           url: dataUrl,
@@ -227,96 +203,41 @@ async function getFeishuAccessToken(appId, appSecret) {
   }
 }
 
-async function simulateDingTalkDownload(tabId) {
-  try {
-    // 尝试向内容脚本发送消息，如果失败则注入脚本
-    let response;
-    try {
-      response = await chrome.tabs.sendMessage(tabId, {
-        type: "API_DOWNLOAD"
-      });
-    } catch (messageError) {
-      // 注入内容脚本
-      await chrome.scripting.executeScript({
-        target: { tabId: tabId },
-        files: ['dingtalk-content-script.js']
-      });
-
-      // 等待脚本初始化
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // 重新尝试发送消息
-      response = await chrome.tabs.sendMessage(tabId, {
-        type: "API_DOWNLOAD"
-      });
-    }
-
-    // 即使响应验证失败，我们也检查是否有有效的下载URL
-    if (!response || !response.success) {
-      // 如果我们有downloadUrl，即使success为false也继续
-      if (response && response.downloadUrl) {
-        // 使用我们得到的数据继续
-      } else {
-        throw new Error(response?.msg || 'Failed to get download URL from content script');
-      }
-    }
-
-    // 使用内容脚本返回的下载URL
-    const downloadUrl = response.downloadUrl;
-    const filename = response.filename || `dingtalk_document_${Date.now()}.xlsx`;
-
-    // 启动下载
-    chrome.downloads.download({
-      url: downloadUrl,
-      filename: filename,
-      saveAs: true
-    });
-
-    return { success: true, message: "Download initiated successfully", downloadUrl: downloadUrl };
-  } catch (error) {
-    throw error;
-  }
-}
-
-// 监听来自内容脚本的消息
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  if (request.type === "FOUND_URL") {
-    console.log('Found DingTalk download URL:', request.how, request.url);
-    // 不再自动下载，只记录日志。下载由用户点击按钮触发
-    sendResponse({ received: true });
-  }
-  return true;
-});
-
-async function getFeishuSheetId(spreadsheetToken, accessToken) {
-  try {
-    const response = await fetch(`https://open.feishu.cn/open-apis/sheets/v3/spreadsheets/${spreadsheetToken}/sheets/query`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    });
-
-    const data = await response.json();
-    console.log('Sheet ID query response:', data);
-
-    if (data.code === 0 && data.data && data.data.sheets && data.data.sheets.length > 0) {
-      // Return the first sheet's ID
-      return data.data.sheets[0].sheet_id;
-    } else {
-      throw new Error(`Failed to get sheet ID: ${data.msg || 'No sheets found'}`);
-    }
-  } catch (error) {
-    console.error('Error getting Feishu sheet ID:', error);
-    throw error;
-  }
-}
 
 // 飞书应用凭据（系统内置）
 const FEISHU_CONFIG = {
   appId: 'cli_a8588718f4af901c',  // 替换为你的实际App ID
   appSecret: 'RlUiFV5bx7KldWeMUVT8rgqc7ynMWvYO'  // 替换为你的实际App Secret
 };
+
+async function getFeishuAccessToken(appId, appSecret) {
+  try {
+    console.log('Getting Feishu access token with:', { appId, appSecret: appSecret.substring(0, 8) + '...' });
+
+    const response = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8'
+      },
+      body: JSON.stringify({
+        app_id: appId,
+        app_secret: appSecret
+      })
+    });
+
+    const data = await response.json();
+    console.log('Feishu API Response:', data);
+
+    if (data && data.code === 0 && data.tenant_access_token) {
+      return data.tenant_access_token;
+    } else {
+      throw new Error(data.msg || `Failed to get access token (code: ${data.code})`);
+    }
+  } catch (error) {
+    console.error('Error getting Feishu access token:', error);
+    throw error;
+  }
+}
 
 async function exportFeishuDocument(feishuInfo, accessToken = null) {
   // 如果没有提供accessToken，使用内置凭据获取
@@ -363,7 +284,7 @@ async function exportFeishuDocument(feishuInfo, accessToken = null) {
       throw new Error(`Export timeout or failed. Final status: ${result.job_status}, message: ${result.job_error_msg || 'Unknown'}`);
     }
 
-    const filename = `feishu_${feishuInfo.type}_${feishuInfo.token}.csv`;
+    const filename = `feishu_${feishuInfo.type}_${feishuInfo.token}.xlsx`;
     console.log('Downloading file with filename:', filename);
 
     // 获取真实的下载URL
@@ -379,117 +300,197 @@ async function exportFeishuDocument(feishuInfo, accessToken = null) {
   }
 }
 
+async function getFeishuSheetId(spreadsheetToken, accessToken) {
+  try {
+    const response = await fetch(`https://open.feishu.cn/open-apis/sheets/v3/spreadsheets/${spreadsheetToken}/sheets/query`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
 
+    const data = await response.json();
+    console.log('Sheet ID query response:', data);
 
-chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
-  if (request.action === 'extractSheetInfo') {
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-      const url = tabs[0].url;
-      const sheetInfo = extractSheetInfo(url);
+    if (data.code === 0 && data.data && data.data.sheets && data.data.sheets.length > 0) {
+      // Return the first sheet's ID
+      return data.data.sheets[0].sheet_id;
+    } else {
+      throw new Error(`Failed to get sheet ID: ${data.msg || 'No sheets found'}`);
+    }
+  } catch (error) {
+    console.error('Error getting Feishu sheet ID:', error);
+    throw error;
+  }
+}
 
-      if (sheetInfo) {
-        sendResponse({
-          success: true,
-          sheetInfo: sheetInfo,
-          type: 'google'
-        });
-      } else {
-        const feishuInfo = extractFeishuInfo(url);
-        if (feishuInfo) {
-          sendResponse({
-            success: true,
-            feishuInfo: feishuInfo,
-            type: 'feishu'
-          });
-        } else {
-          const dingTalkInfo = extractDingTalkInfo(url);
-          if (dingTalkInfo) {
-            sendResponse({
-              success: true,
-              dingTalkInfo: dingTalkInfo,
-              type: 'dingtalk'
-            });
+// 下载带有签名的文件
+async function downloadSignedFile(url, headers, filename) {
+  try {
+    // 在Service Worker中，我们直接使用chrome.downloads.download
+    // 但是需要先获取文件内容并转换为data URL
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: headers
+    });
+
+    if (!response.ok) {
+      throw new Error(`下载失败: ${response.status} ${response.statusText}`);
+    }
+
+    // 获取文件内容
+    const blob = await response.blob();
+
+    // 转换为base64
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = function() {
+        const base64data = reader.result.split(',')[1]; // 移除data:...;base64,前缀
+        const dataUrl = `data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,${base64data}`;
+
+        chrome.downloads.download({
+          url: dataUrl,
+          filename: filename,
+          saveAs: true
+        }, (downloadId) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
           } else {
-            sendResponse({
-              success: false,
-              error: 'No supported document found'
-            });
+            resolve(downloadId);
+          }
+        });
+      };
+
+      reader.onerror = function() {
+        reject(new Error('Failed to read file blob'));
+      };
+
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.error('下载签名文件失败:', error);
+    throw error;
+  }
+}
+
+// 服务器配置
+const SERVER_CONFIG = {
+  url: 'http://localhost:3000/api/export',  // 服务器地址
+  timeout: 30000  // 30秒超时
+};
+
+// 发送URL到服务器进行处理
+async function sendUrlToServer(url) {
+  try {
+    console.log('Sending URL to server:', url);
+
+    const response = await fetch(SERVER_CONFIG.url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: url,
+        timestamp: Date.now()
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Server response: ${response.status} ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log('Server response:', result);
+
+    if (result.success && result.fileToken) {
+      return result;
+    } else {
+      throw new Error(result.error || 'Server processing failed');
+    }
+  } catch (error) {
+    console.error('Error sending URL to server:', error);
+    throw error;
+  }
+}
+
+// 消息监听器
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  (async () => {
+    try {
+      if (request.action === 'extractSheetInfo') {
+        // 获取当前活动标签页的URL
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        const url = tab ? tab.url : '';
+        console.log('Extracting sheet info from URL:', url);
+
+        // 检查是否为Google Sheets
+        if (url.includes('docs.google.com/spreadsheets')) {
+          const sheetInfo = extractSheetInfo(url);
+          if (sheetInfo) {
+            sendResponse({ success: true, type: 'google', sheetInfo });
+            return;
           }
         }
+
+        // 检查是否为飞书文档
+        if (url.includes('feishu.cn')) {
+          const feishuInfo = extractFeishuInfo(url);
+          if (feishuInfo) {
+            sendResponse({ success: true, type: 'feishu', feishuInfo });
+            return;
+          }
+        }
+
+        sendResponse({ success: false });
       }
-    });
-    return true;
-  }
 
-  if (request.action === 'downloadSheet') {
-    chrome.downloads.download({
-      url: request.downloadUrl,
-      filename: request.filename,
-      saveAs: true
-    });
-    sendResponse({success: true});
-    return true;
-  }
-
-  if (request.action === 'exportFeishuDocument') {
-    exportFeishuDocument(request.feishuInfo, request.accessToken)
-      .then((result) => {
-        sendResponse({success: true, downloadUrl: result.downloadUrl});
-      })
-      .catch((error) => {
-        sendResponse({success: false, error: error.message});
-      });
-    return true;
-  }
-
-  if (request.action === 'getFeishuAccessToken') {
-    getFeishuAccessToken(request.appId, request.appSecret)
-      .then((token) => {
-        sendResponse({success: true, token: token});
-      })
-      .catch((error) => {
-        console.error('Detailed error in getFeishuAccessToken:', error);
-        sendResponse({success: false, error: error.message});
-      });
-    return true;
-  }
-
-  if (request.action === 'debugFeishuApi') {
-    (async () => {
-      try {
-        const response = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json; charset=utf-8'
-          },
-          body: JSON.stringify({
-            app_id: request.appId,
-            app_secret: request.appSecret
-          })
-        });
-
-        const data = await response.json();
-        sendResponse({success: true, response: data});
-      } catch (error) {
-        sendResponse({success: false, error: error.message});
+      else if (request.action === 'downloadSheet') {
+        console.log('Downloading sheet from URL:', request.downloadUrl);
+        await downloadSignedFile(request.downloadUrl, {}, request.filename);
+        sendResponse({ success: true });
       }
-    })();
-    return true;
-  }
 
-  
-  if (request.action === 'simulateDingTalkDownload') {
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-      const tabId = tabs[0].id;
-      simulateDingTalkDownload(tabId)
-        .then((result) => {
-          sendResponse(result);
-        })
-        .catch((error) => {
+      else if (request.action === 'exportFeishuDocument') {
+        console.log('Sending Feishu URL to server...');
+        try {
+          // 发送URL到服务器处理
+          const result = await sendUrlToServer(request.feishuInfo.url);
+
+          // 获取新的访问令牌
+          const accessToken = await getFeishuAccessToken(FEISHU_CONFIG.appId, FEISHU_CONFIG.appSecret);
+
+          // 生成下载URL（不包含access_token，因为要在header中发送）
+          const downloadUrl = `https://open.feishu.cn/open-apis/drive/v1/export_tasks/file/${result.fileToken}/download`;
+
+          // 生成文件名
+          const filename = `feishu_${request.feishuInfo.type}_${request.feishuInfo.token}.xlsx`;
+
+          // 下载文件，带有Authorization头
+          await downloadSignedFile(downloadUrl, {
+            'Authorization': `Bearer ${accessToken}`
+          }, filename);
+
+          sendResponse({
+            success: true,
+            downloadUrl: downloadUrl
+          });
+        } catch (error) {
           sendResponse({ success: false, error: error.message });
-        });
-    });
-    return true;
-  }
+        }
+      }
 
-  });
+      else if (request.action === 'ping') {
+        sendResponse({ success: true });
+      }
+
+
+    } catch (error) {
+      console.error('Error handling message:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+  })();
+
+  return true; // 保持消息通道开放以支持异步响应
+});
+
+console.log('🔧 Background Script已加载');

@@ -1,21 +1,23 @@
 {
   "manifest_version": 3,
-  "name": "Document CSV Downloader",
+  "name": "Document XLSX Downloader",
   "version": "2.0",
-  "description": "Extract and export Google Sheets and Feishu documents as CSV files",
+  "description": "Extract and export Google Sheets and Feishu documents as XLSX files",
   "permissions": [
     "activeTab",
     "scripting",
     "downloads",
     "storage",
-    "tabs"
+    "tabs",
+    "cookies",
+    "webRequest",
+    "declarativeNetRequest"
   ],
     "host_permissions": [
     "https://docs.google.com/spreadsheets/*",
     "https://open.feishu.cn/*",
     "https://*.feishu.cn/*",
-    "https://alidocs.dingtalk.com/*",
-    "https://*.dingtalk.com/*"
+    "http://localhost:3000/*"
       ],
   "action": {
     "default_popup": "popup.html",
@@ -27,12 +29,5 @@
   },
   "background": {
     "service_worker": "background.js"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://alidocs.dingtalk.com/*"],
-      "js": ["dingtalk-content-script.js"],
-      "run_at": "document_end"
-    }
-  ]
+  }
 }

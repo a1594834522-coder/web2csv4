@@ -86,13 +86,14 @@
 </head>
 <body>
   <div class="header">
-    <h1>Document CSV Downloader</h1>
+    <h1>Document XLSX Downloader</h1>
   </div>
 
   <div id="status" class="status loading">
     Checking current page...
   </div>
 
+  
   
   <div id="sheetInfo" style="display: none;" class="document-info">
     <h3>Google Sheet Information</h3>
@@ -107,22 +108,31 @@
     <p><strong>Document Type:</strong> <span id="feishuType"></span></p>
     <p><strong>Token:</strong> <span id="feishuToken"></span></p>
     <p><strong>URL:</strong> <span id="feishuUrl"></span></p>
-    <p><strong>Real Download URL:</strong> <span id="feishuRealDownloadUrl" style="color: #1a73e8; word-break: break-all;"></span></p>
+    <p><strong>Real Download URL:</strong> <span id="feishuRealDownloadUrl" style="color: #1a73e8; word-break: break-all; display: none;"></span></p>
   </div>
 
-  <div id="dingTalkInfo" style="display: none;" class="document-info">
-    <h3>DingTalk Document Information</h3>
-    <p><strong>Document ID:</strong> <span id="dingTalkNodeId"></span></p>
-    <p><strong>URL:</strong> <span id="dingTalkUrl"></span></p>
-    <p><strong>Real Download URL:</strong> <span id="dingTalkRealDownloadUrl" style="color: #1a73e8; word-break: break-all;"></span></p>
-    <p style="color: #666; font-size: 11px; margin-top: 10px;">
-      <strong>Note:</strong> This will get the download URL via API
-    </p>
-  </div>
-
+  
   <button id="downloadBtn" style="display: none;" class="download-btn">
-    Download as CSV
+    Download as XLSX
   </button>
+
+  <div style="margin-top: 15px; padding: 10px; background-color: #f1f3f4; border-radius: 6px; font-size: 11px; color: #5f6368;">
+    <strong>🔧文档提取说明:</strong><br>
+    • 支持 Google Sheets 和飞书文档<br>
+    • 使用官方API直接获取文件<br>
+    • 简单易用的下载功能
+  </div>
+
+  <div id="debugSection" style="margin-top: 15px; padding: 10px; background-color: #fef7e0; border-radius: 6px; font-size: 11px; color: #8b6914; display: none;">
+    <strong>🐛 调试信息:</strong><br>
+    <div id="debugInfo"></div>
+    <button id="testInjectionBtn" style="margin-top: 8px; padding: 6px 12px; font-size: 11px; background-color: #fbbc04; color: white; border: none; border-radius: 3px; cursor: pointer;">
+      测试脚本注入
+    </button>
+    <button id="checkUrlsBtn" style="margin-top: 8px; padding: 6px 12px; font-size: 11px; background-color: #34a853; color: white; border: none; border-radius: 3px; cursor: pointer;">
+      检查捕获的URL
+    </button>
+  </div>
 
   <script src="popup.js"></script>
 </body>
