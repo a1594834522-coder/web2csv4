@@ -17,7 +17,8 @@
     "https://docs.google.com/spreadsheets/*",
     "https://open.feishu.cn/*",
     "https://*.feishu.cn/*",
-    "http://localhost:3000/*"
+    "http://localhost:3000/*",
+    "https://web2csv-server.a1594834522.workers.dev/*"
       ],
   "action": {
     "default_popup": "popup.html",

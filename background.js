@@ -375,14 +375,20 @@ async function downloadSignedFile(url, headers, filename) {
 
 // 服务器配置
 const SERVER_CONFIG = {
-  url: 'http://localhost:3000/api/export',  // 服务器地址
+  url: 'https://web2csv-server.a1594834522.workers.dev/api/export',  // 服务器地址
   timeout: 30000  // 30秒超时
 };
 
 // 发送URL到服务器进行处理
 async function sendUrlToServer(url) {
   try {
-    console.log('Sending URL to server:', url);
+    console.log('=== SENDING URL TO SERVER ===');
+    console.log('Server URL:', SERVER_CONFIG.url);
+    console.log('Sending URL:', url);
+    console.log('Full request body:', JSON.stringify({
+      url: url,
+      timestamp: Date.now()
+    }, null, 2));
 
     const response = await fetch(SERVER_CONFIG.url, {
       method: 'POST',
@@ -394,6 +400,9 @@ async function sendUrlToServer(url) {
         timestamp: Date.now()
       })
     });
+
+    console.log('Response status:', response.status, response.statusText);
+    console.log('Response headers:', response.headers);
 
     if (!response.ok) {
       throw new Error(`Server response: ${response.status} ${response.statusText}`);
