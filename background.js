@@ -166,42 +166,6 @@ async function downloadFeishuFile(fileToken, accessToken, filename) {
   }
 }
 
-async function getFeishuAccessToken(appId, appSecret) {
-  try {
-    console.log('Getting Feishu access token with:', { appId, appSecret: appSecret.substring(0, 8) + '...' });
-
-    const response = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8'
-      },
-      body: JSON.stringify({
-        app_id: appId,
-        app_secret: appSecret
-      })
-    });
-
-    const data = await response.json();
-    console.log('Feishu API Response:', data);
-    console.log('Response type:', typeof data);
-    console.log('Response keys:', Object.keys(data));
-    console.log('Has tenant_access_token:', 'tenant_access_token' in data);
-    console.log('tenant_access_token value:', data.tenant_access_token);
-
-    if (data && data.code === 0 && data.tenant_access_token) {
-      return data.tenant_access_token;
-    } else {
-      console.error('Feishu API Error Response:', data);
-      console.error('Code:', data.code);
-      console.error('Message:', data.msg);
-      console.error('Has tenant_access_token:', !!data.tenant_access_token);
-      throw new Error(data.msg || `Failed to get access token (code: ${data.code})`);
-    }
-  } catch (error) {
-    console.error('Error getting Feishu access token:', error);
-    throw error;
-  }
-}
 
 
 // 飞书应用凭据（系统内置）
@@ -375,7 +339,7 @@ async function downloadSignedFile(url, headers, filename) {
 
 // 服务器配置
 const SERVER_CONFIG = {
-  url: 'https://web2csv-server.a1594834522.workers.dev/api/export',  // 服务器地址
+  url: 'https://3.abruzz1.cn/api/export',  // 服务器地址
   timeout: 30000  // 30秒超时
 };
 
